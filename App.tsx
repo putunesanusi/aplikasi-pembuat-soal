@@ -66,6 +66,11 @@ const Sdn14Generator = () => {
   const [identityErrors, setIdentityErrors] = useState<any>({});
   const [showRegisterInfo, setShowRegisterInfo] = useState(false);
 
+  // --- STATE LOGIN (NEW) ---
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [loginForm, setLoginForm] = useState({ username: '', password: '' });
+  const [loginError, setLoginError] = useState<string | null>(null);
+
   // --- STATE KHUSUS MODE QUIZ ---
   const [quizMode, setQuizMode] = useState('edit'); // 'edit' | 'play' | 'score'
   const [quizState, setQuizState] = useState<{
@@ -400,6 +405,12 @@ const Sdn14Generator = () => {
 
   // --- NAVIGATION HELPER ---
   const navigateTo = (viewName: string) => {
+    // PROTEKSI LOGIN: Jika belum login, paksa ke login (kecuali welcome)
+    if (viewName !== 'welcome' && !isLoggedIn) {
+        setCurrentView('login');
+        return;
+    }
+
     // PROTEKSI SIDEBAR: Jika ingin ke technical/result/quiz tapi identity belum lengkap, tolak
     // KECUALI jika ingin ke 'tutorial' atau 'legal', itu boleh kapan saja
     if (viewName !== 'welcome' && viewName !== 'identity' && viewName !== 'tutorial' && viewName !== 'legal' && !isIdentityComplete) {
@@ -870,6 +881,24 @@ const Sdn14Generator = () => {
   const handleRetryFailedImages = () => {
     if (generatedData) {
         processBackgroundImages(generatedData);
+    }
+  };
+
+  // --- HANDLER LOGIN (NEW) ---
+  const handleLogin = (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoginError(null);
+    
+    // Simple check (can be replaced with API call later)
+    // Default: admin / admin123
+    const validUser = "admin";
+    const validPass = "admin123";
+
+    if (loginForm.username === validUser && loginForm.password === validPass) {
+        setIsLoggedIn(true);
+        setCurrentView('identity'); // Go to identity after login
+    } else {
+        setLoginError("Username atau Password salah. Silakan hubungi administrator.");
     }
   };
 
@@ -1485,10 +1514,10 @@ const Sdn14Generator = () => {
                       </div>
 
                       <button 
-                          onClick={() => navigateTo('legal')}
+                          onClick={() => navigateTo(isLoggedIn ? 'identity' : 'login')}
                           className="bg-yellow-400 hover:bg-yellow-300 text-emerald-900 font-extrabold py-4 px-10 rounded-full shadow-xl shadow-yellow-400/20 transform hover:-translate-y-1 transition-all flex items-center gap-3 mx-auto text-lg"
                       >
-                          Buat Soal Sekarang <ArrowRight size={24} />
+                          {isLoggedIn ? 'Lanjutkan Buat Soal' : 'Buat Soal Sekarang'} <ArrowRight size={24} />
                       </button>
 
                       <button 
@@ -1504,6 +1533,79 @@ const Sdn14Generator = () => {
                           </div>
                       )}
                       
+                  </div>
+              </div>
+          )}
+
+          {/* --- VIEW: LOGIN (NEW) --- */}
+          {currentView === 'login' && (
+              <div className="min-h-screen bg-gray-100 flex flex-col justify-center items-center p-6">
+                  <div className="bg-white p-8 rounded-sm shadow-xl border border-gray-300 w-full max-w-md animate-in fade-in slide-in-from-bottom-4 duration-500">
+                      <div className="flex flex-col items-center mb-8">
+                          <div className="bg-emerald-800 p-3 rounded-sm mb-4">
+                              <Lock className="w-8 h-8 text-white" />
+                          </div>
+                          <h2 className="text-2xl font-bold text-slate-800 uppercase tracking-tight">Login Pengguna</h2>
+                          <p className="text-slate-500 text-sm mt-1">Gunakan akun dari administrator</p>
+                      </div>
+
+                      <form onSubmit={handleLogin} className="space-y-5">
+                          <div>
+                              <label className="block text-xs font-bold text-slate-600 mb-1.5 uppercase">Username</label>
+                              <div className="relative">
+                                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                      <User size={16} className="text-slate-400" />
+                                  </div>
+                                  <input 
+                                      type="text" 
+                                      required
+                                      className="w-full pl-10 border border-gray-300 rounded-sm p-3 text-sm focus:ring-1 focus:ring-emerald-500 outline-none"
+                                      placeholder="Masukkan username"
+                                      value={loginForm.username}
+                                      onChange={e => setLoginForm({...loginForm, username: e.target.value})}
+                                  />
+                              </div>
+                          </div>
+
+                          <div>
+                              <label className="block text-xs font-bold text-slate-600 mb-1.5 uppercase">Password</label>
+                              <div className="relative">
+                                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                      <Key size={16} className="text-slate-400" />
+                                  </div>
+                                  <input 
+                                      type="password" 
+                                      required
+                                      className="w-full pl-10 border border-gray-300 rounded-sm p-3 text-sm focus:ring-1 focus:ring-emerald-500 outline-none"
+                                      placeholder="Masukkan password"
+                                      value={loginForm.password}
+                                      onChange={e => setLoginForm({...loginForm, password: e.target.value})}
+                                  />
+                              </div>
+                          </div>
+
+                          {loginError && (
+                              <div className="bg-red-50 border border-red-200 text-red-600 text-xs p-3 rounded-sm flex items-center gap-2 font-medium">
+                                  <AlertTriangle size={14} /> {loginError}
+                              </div>
+                          )}
+
+                          <button 
+                              type="submit"
+                              className="w-full bg-emerald-800 hover:bg-emerald-900 text-white font-bold py-3 rounded-sm shadow-md transition-all flex items-center justify-center gap-2"
+                          >
+                              Masuk Sekarang <ArrowRight size={18} />
+                          </button>
+                      </form>
+
+                      <div className="mt-8 pt-6 border-t border-gray-100 text-center">
+                          <button 
+                              onClick={() => navigateTo('welcome')}
+                              className="text-slate-500 hover:text-slate-800 text-xs font-bold flex items-center justify-center gap-1 mx-auto"
+                          >
+                              <ArrowLeft size={14} /> Kembali ke Beranda
+                          </button>
+                      </div>
                   </div>
               </div>
           )}

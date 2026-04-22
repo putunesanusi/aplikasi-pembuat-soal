@@ -1,6 +1,6 @@
 import { GoogleGenAI } from "@google/genai";
 
-const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 
 // Models for Text Generation with Fallback Priority
 // Urutan: High Intelligence -> High Speed/New Gen -> Standard -> Lightweight
